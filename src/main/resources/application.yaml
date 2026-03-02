@@ -1,0 +1,40 @@
+server:
+  port: 8081
+  forward-headers-strategy: framework
+spring:
+  application.name: auth
+  security:
+    oauth2:
+      client:
+        provider:
+          keycloak:
+            issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/max_bank}
+            user-name-attribute: preferred_username
+cloud:
+  openfeign:
+    client:
+      config:
+        default:
+          logger-level: basic
+logging:
+  level:
+    ROOT: WARN
+    org.springframework: INFO
+    ru.max: DEBUG
+
+max.bank.auth:
+  dev.mode: true
+  feign:
+    keycloak-url: ${KEYCLOAK_REALM_URL:http://localhost:8080/realms/max_bank/protocol/openid-connect}
+  keycloak:
+    client:
+      keycloak-client-id: ${KEYCLOAK_CLIENT_ID:springsecurity}
+      keycloak-client-secret: ${KEYCLOAK_SECRET:uLCplrc72MEes2qLOW4EJqjLpWJ1xmQP}
+    admin:
+      url: ${KEYCLOAK_SERVER_URL:http://localhost:8080}
+      admin-realm: ${KEYCLOAK_ADMIN_REALM:master}
+      username: ${KEYCLOAK_ADMIN_USERNAME:keycloak-admin}
+      password: ${KEYCLOAK_ADMIN_PASSWORD:admin123}
+      client-id: ${KEYCLOAK_ADMIN_CLIENT_ID:admin-cli}
+      realm: ${KEYCLOAK_REALM:max_bank}
+      clientSecret: AvUuh9aIn9KUVrmQVhnQf0nEcvhnEhM4

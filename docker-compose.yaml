@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  # Keycloak сервер
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.5
+    container_name: keycloak
+    command: start-dev  # Режим разработки
+    environment:
+      - KC_FEATURES=token-exchange
+      - KEYCLOAK_ADMIN=keycloak-admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin123
+      - KC_HOSTNAME=localhost
+      - KC_HOSTNAME_PORT=8080
+      - KC_HTTP_ENABLED=true
+      - KC_HEALTH_ENABLED=true
+      - KC_METRICS_ENABLED=true
+      - KC_DB=postgres
+      - KC_DB_URL=jdbc:postgresql://postgres:5432/keycloak
+      - KC_DB_USERNAME=keycloak
+      - KC_DB_PASSWORD=keycloak
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./keycloak/import:/opt/keycloak/data/import  # Для импорта realm
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - auth-network
+
+
+  # PostgreSQL для Keycloak
+  postgres:
+    image: postgres:16-alpine
+    container_name: keycloak-postgres
+    environment:
+      - POSTGRES_DB=keycloak
+      - POSTGRES_USER=keycloak
+      - POSTGRES_PASSWORD=keycloak
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - auth-network
+
+#  # Ваш auth сервис
+#  auth-service:
+#    build:
+#      context: ./auth-service  # Путь к папке с вашим сервисом
+#      dockerfile: Dockerfile
+#    container_name: auth-service
+#    environment:
+#      - SERVER_PORT=8081
+#      - KEYCLOAK_ISSUER_URI=http://keycloak:8080/realms/max_bank
+#      - KEYCLOAK_REALM_URL=http://keycloak:8080/realms/max_bank/protocol/openid-connect
+#      - KEYCLOAK_SERVER_URL=http://keycloak:8080/
+#      - KEYCLOAK_CLIENT_ID=springsecurity
+#      - KEYCLOAK_SECRET=6pgARZhLJ3FxffdQbMh1a4WXKptisRsc
+#      - KEYCLOAK_ADMIN_USERNAME=keycloak-admin
+#      - KEYCLOAK_ADMIN_PASSWORD=admin123
+#      - KEYCLOAK_ADMIN_CLIENT_ID=admin-cli
+#      - KEYCLOAK_REALM=max_bank
+#      - KEYCLOAK_ADMIN_REALM=master
+#      - SPRING_PROFILES_ACTIVE=docker
+#    ports:
+#      - "8081:8081"
+#    depends_on:
+#      keycloak:
+#        condition: service_healthy
+#    networks:
+#      - auth-network
+#
+#  # Redis для кэширования (если используется)
+#  redis:
+#    image: redis:7-alpine
+#    container_name: auth-redis
+#    ports:
+#      - "6379:6379"
+#    volumes:
+#      - redis-data:/data
+#    command: redis-server --appendonly yes
+#    healthcheck:
+#      test: ["CMD", "redis-cli", "ping"]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 5
+#    networks:
+#      - auth-network
+
+volumes:
+  postgres-data:
+#  redis-data:
+
+networks:
+  auth-network:
+    driver: bridge

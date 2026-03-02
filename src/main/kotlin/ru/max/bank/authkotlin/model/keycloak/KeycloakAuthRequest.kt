@@ -1,0 +1,15 @@
+package ru.max.bank.authkotlin.model.keycloak
+
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.nimbusds.oauth2.sdk.GrantType
+
+data class KeycloakAuthRequest(
+    val username: String,
+    val password: String,
+    @JsonProperty("client_id")
+    val clientId: String,
+    @JsonProperty("client_secret")
+    val clientSecret: String,
+    @JsonProperty("grant_type")
+    val grantType: String
+)
