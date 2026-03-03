@@ -7,6 +7,6 @@ class BadRequestException(errorCode: String, errorMessage: String, status: HttpS
 
     companion object {
         fun invalidMessage(message: String, vararg args: Any?) =
-            BadRequestException("BAD_REQUEST", message.format(*args), HttpStatus.BAD_REQUEST)
+            BadRequestException(CommonErrorCode.BAD_REQUEST.name, message.format(*args), HttpStatus.BAD_REQUEST)
     }
 }

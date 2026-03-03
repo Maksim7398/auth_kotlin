@@ -1,5 +1,7 @@
 package ru.max.bank.authkotlin.external
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.springframework.stereotype.Service
 import org.springframework.ws.client.core.WebServiceTemplate
 import ru.max.bank.otp.api.OtpServiceClient
@@ -20,4 +22,10 @@ class OtpClient(
     override fun checkOtp(request: OtpCheckRequest): OtpCheckResponse {
         return webServiceTemplate.marshalSendAndReceive(request) as OtpCheckResponse
     }
+
+    suspend fun sendOtpSuspend(request: OtpSendRequest): OtpSendResponse =
+        withContext(Dispatchers.IO) { sendOtp(request) }
+
+    suspend fun checkOtpSuspend(request: OtpCheckRequest): OtpCheckResponse =
+        withContext(Dispatchers.IO) { checkOtp(request) }
 }

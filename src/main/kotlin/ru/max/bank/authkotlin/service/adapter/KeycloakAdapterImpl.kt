@@ -2,11 +2,11 @@ package ru.max.bank.authkotlin.service.adapter
 
 import feign.FeignException
 import org.keycloak.representations.AccessTokenResponse
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.util.LinkedMultiValueMap
 import ru.max.bank.authkotlin.config.properties.KeycloakClientProperties
 import ru.max.bank.authkotlin.exception.InternalServerException.Companion.serverError
-import ru.max.bank.authkotlin.exception.KeycloakAuthenticationException
 import ru.max.bank.authkotlin.exception.KeycloakAuthenticationException.Companion.authenticationFailed
 import ru.max.bank.authkotlin.external.KeycloakClient
 import ru.max.bank.authkotlin.model.keycloak.KeycloakUserInfoResponse
@@ -16,6 +16,8 @@ class KeycloakAdapterImpl(
     private val keycloakClient: KeycloakClient,
     private val keycloakClientProperties: KeycloakClientProperties,
 ) : KeycloakAdapter {
+
+    private val log = LoggerFactory.getLogger(KeycloakAdapterImpl::class.java)
 
     companion object {
         const val GRANT_TYPE_PASSWORD: String = "password"
@@ -44,8 +46,21 @@ class KeycloakAdapterImpl(
 
             keycloakClient.getToken(form)
         } catch (exception: FeignException.FeignClientException) {
-            throw KeycloakAuthenticationException.authenticationFailed("Ошибка при попытке авторизации")
+            log.warn(
+                "Keycloak login failed (status={}, clientId={}, username={})",
+                exception.status(),
+                keycloakClientProperties.keycloakClientId,
+                email,
+                exception
+            )
+            throw authenticationFailed("Ошибка при попытке авторизации")
         } catch (exception: FeignException) {
+            log.error(
+                "Keycloak login error (clientId={}, username={})",
+                keycloakClientProperties.keycloakClientId,
+                email,
+                exception
+            )
             throw serverError("Не удалось осуществить авторизацию, попробуйте позже")
         }
     }
@@ -70,8 +85,21 @@ class KeycloakAdapterImpl(
 
             keycloakClient.exchangeToken(exchangeForm)
         } catch (exception: FeignException.FeignClientException) {
-            throw exception
+            log.warn(
+                "Keycloak token exchange failed (status={}, clientId={}, userId={})",
+                exception.status(),
+                keycloakClientProperties.keycloakClientId,
+                notNullUserId,
+                exception
+            )
+            throw authenticationFailed("Ошибка при попытке получить токен пользователя")
         } catch (exception: FeignException) {
+            log.error(
+                "Keycloak token exchange error (clientId={}, userId={})",
+                keycloakClientProperties.keycloakClientId,
+                notNullUserId,
+                exception
+            )
             throw serverError("Не удалось осуществить авторизацию, попробуйте позже")
         }
     }
@@ -113,8 +141,19 @@ class KeycloakAdapterImpl(
 
             keycloakClient.logout(form)
         } catch (exception: FeignException.FeignClientException) {
+            log.warn(
+                "Keycloak logout failed (status={}, clientId={})",
+                exception.status(),
+                keycloakClientProperties.keycloakClientId,
+                exception
+            )
             throw authenticationFailed("Ошибка при попытке выхода")
         } catch (exception: FeignException) {
+            log.error(
+                "Keycloak logout error (clientId={})",
+                keycloakClientProperties.keycloakClientId,
+                exception
+            )
             throw serverError("Не удалось осуществить выход, попробуйте позже")
         }
     }
@@ -131,8 +170,19 @@ class KeycloakAdapterImpl(
 
             keycloakClient.refreshToken(form)
         } catch (exception: FeignException.FeignClientException) {
+            log.warn(
+                "Keycloak refresh failed (status={}, clientId={})",
+                exception.status(),
+                keycloakClientProperties.keycloakClientId,
+                exception
+            )
             throw authenticationFailed("Ошибка при попытке обновления токена")
         } catch (exception: FeignException) {
+            log.error(
+                "Keycloak refresh error (clientId={})",
+                keycloakClientProperties.keycloakClientId,
+                exception
+            )
             throw serverError("Не удалось обновить токен, попробуйте позже")
         }
     }
@@ -141,8 +191,19 @@ class KeycloakAdapterImpl(
         return try {
             keycloakClient.getUser(accessToken)
         } catch (exception: FeignException.FeignClientException) {
+            log.warn(
+                "Keycloak getUser failed (status={}, clientId={})",
+                exception.status(),
+                keycloakClientProperties.keycloakClientId,
+                exception
+            )
             throw authenticationFailed("Ошибка при попытке получения информации о пользователе")
         } catch (exception: FeignException) {
+            log.error(
+                "Keycloak getUser error (clientId={})",
+                keycloakClientProperties.keycloakClientId,
+                exception
+            )
             throw serverError("Не удалось получить информацию о пользователе, попробуйте позже")
         }
     }
