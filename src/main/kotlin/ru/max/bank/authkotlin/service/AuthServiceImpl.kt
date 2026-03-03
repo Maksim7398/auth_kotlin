@@ -19,7 +19,7 @@ class AuthServiceImpl(
     private val otpService: OtpService
 ) : AuthService {
 
-    override fun sendOtpToUserByPhoneNumber(request: SendOtpRequest): SendOtpResponse {
+    override suspend fun sendOtpToUserByPhoneNumber(request: SendOtpRequest): SendOtpResponse {
         return otpService.sendOtpToUserByPhoneNumber(request)
     }
 
@@ -35,7 +35,7 @@ class AuthServiceImpl(
         userRepresentation.isEnabled = true
 
         val userAttributes = mapOf(
-            "EXTERNAL_ID" to listOf(registrationRequest.externalId.toString())
+            "EXTERNAL_ID" to listOf(registrationRequest.externalId)
         )
         userRepresentation.attributes = userAttributes
 
@@ -48,7 +48,7 @@ class AuthServiceImpl(
         TODO("Not yet implemented")
     }
 
-    override fun loginByOtp(otpCheck: SendOtpCheck): AccessResponse? {
+    override suspend fun loginByOtp(otpCheck: SendOtpCheck): AccessResponse? {
         val result = otpService.checkOtpSentUserByPhoneNumber(otpCheck)
         if (result) {
             val findByUsername = keycloakAdminAdapter.findByUsername(otpCheck.phoneNumber)
@@ -68,12 +68,12 @@ class AuthServiceImpl(
         }
     }
 
-    override fun logout(request: LogoutRequest?) {
-        TODO("Not yet implemented")
+    override fun logout(request: LogoutRequest) {
+        keycloakAdapter.logout(request.refreshToken)
     }
 
-    override fun refresh(request: RefreshRequest?): AccessResponse? {
-        val refresh = keycloakAdapter.refresh(request!!.refreshToken)
+    override fun refresh(request: RefreshRequest): AccessResponse? {
+        val refresh = keycloakAdapter.refresh(request.refreshToken)
         return AccessResponse(
             refresh!!.token, refresh.expiresIn,
             refresh.refreshToken, refresh.refreshExpiresIn

@@ -6,7 +6,7 @@ import ru.max.bank.authkotlin.model.response.SendOtpResponse
 
 interface OtpService {
 
-    fun sendOtpToUserByPhoneNumber(request: SendOtpRequest): SendOtpResponse
+    suspend fun sendOtpToUserByPhoneNumber(request: SendOtpRequest): SendOtpResponse
 
-    fun checkOtpSentUserByPhoneNumber(otpCheck: SendOtpCheck): Boolean
+    suspend fun checkOtpSentUserByPhoneNumber(otpCheck: SendOtpCheck): Boolean
 }
